@@ -1,24 +1,39 @@
 'use client'
-
 import { useState } from 'react';
 import axios from 'axios';
-
 export default function Home() {
   const [url, setUrl] = useState('');
-  const [qrCodeUrl, setQrCodeUrl] = useState('');
-
+  const [qrCode, setQrCode] = useState(null);
+  const [loading, setLoading] = useState(false);
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const response = await axios.post('http://localhost:3000/generate-qr', {
         url: url
+      }, {
+        responseType: 'arraybuffer'
       });
-      setQrCodeUrl(response.data.qr_code_url);
+      
+      const blob = new Blob([response.data], { type: 'image/png' });
+      const objectUrl = URL.createObjectURL(blob);
+      setQrCode({ url: objectUrl, blob: blob });
     } catch (error) {
       console.error('Error generating QR Code:', error);
+    } finally {
+      setLoading(false);
     }
   };
-
+  const handleDownload = () => {
+    if (qrCode) {
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(qrCode.blob);
+      link.download = `qrcode-${url.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
   return (
     <div style={styles.container}>
       <h1 style={styles.title}>QR Code Generator</h1>
@@ -30,14 +45,26 @@ export default function Home() {
           placeholder="Enter URL like https://example.com"
           style={styles.input}
         />
-        <button type="submit" style={styles.button}>Generate QR Code</button>
+        <button 
+          type="submit" 
+          style={styles.button}
+          disabled={loading}
+        >
+          {loading ? 'Generating...' : 'Generate QR Code'}
+        </button>
       </form>
-      {qrCodeUrl && <img src={qrCodeUrl} alt="QR Code" style={styles.qrCode} />}
+      {qrCode && (
+        <div style={styles.qrCodeContainer}>
+          <img src={qrCode.url} alt="QR Code" style={styles.qrCode} />
+          <button onClick={handleDownload} style={styles.downloadButton}>
+            Download QR Code
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-// Styles
 const styles = {
   container: {
     minHeight: '100vh',
@@ -66,7 +93,6 @@ const styles = {
     marginTop: '20px',
     width: '300px',
     color: '#121212'
-
   },
   button: {
     padding: '10px 20px',
@@ -76,8 +102,28 @@ const styles = {
     backgroundColor: '#0070f3',
     color: 'white',
     cursor: 'pointer',
+    '&:disabled': {
+      opacity: 0.7,
+      cursor: 'not-allowed',
+    },
   },
   qrCode: {
     marginTop: '20px',
+  },
+  qrCodeContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginTop: '20px',
+  },
+  downloadButton: {
+    padding: '10px 20px',
+    marginTop: '20px',
+    border: 'none',
+    borderRadius: '5px',
+    backgroundColor: '#28a745',
+    color: 'white',
+    cursor: 'pointer',
+    fontSize: '16px',
   },
 };

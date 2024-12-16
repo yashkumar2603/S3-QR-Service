@@ -87,12 +87,18 @@ app.post('/generate-qr', async (req, res) => {
         await r2.putObject(params).promise();
         logger.info('QR code successfully uploaded to R2');
 
-        const r2Url = `${r2PublicUrl}/${fileName}`;
-        logger.info(`Generated R2 URL: ${r2Url}`);
+        // Retrieve the object from R2
+        const getObjectParams = {
+            Bucket: bucketName,
+            Key: fileName
+        };
+        const { Body } = await r2.getObject(getObjectParams).promise();
         
-        res.json({ qr_code_url: r2Url });
+        // Send the image data directly to the client
+        res.contentType('image/png');
+        res.send(Body);
     } catch (error) {
-        logger.error(`Error uploading QR code to R2: ${error.message}`);
+        logger.error(`Error handling QR code: ${error.message}`);
         res.status(500).json({ detail: error.message });
     }
 });
