@@ -1,0 +1,7 @@
+api-node/node_modules
+api-node/package-lock.json
+api-node/.env
+front-end-nextjs/node_modules
+front-end-nextjs/package-lock.json
+front-end-nextjs/.env
+front-end-nextjs/.next
