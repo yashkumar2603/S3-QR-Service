@@ -11,7 +11,7 @@ export default function Home() {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:3000/generate-qr', {
+      const response = await axios.post('https://s3-qr-service.onrender.com/generate-qr', {
         url: url
       }, {
         responseType: 'arraybuffer'
